@@ -1,0 +1,58 @@
+PROC IMPORT DATAFILE='/home/ritika26agarwal1/sasuser.v94/datafiles/BoxplotData.csv'
+out= BoxData_out
+dbms=dlm
+replace;
+delimiter=',';
+getnames=yes;
+run;
+
+data dst.BoxData_out
+infile '/home/ritika26agarwal1/sasuser.v94/datafiles/BoxplotData.csv' 
+delimiter = ',' MISSOVER DSD lrecl=32767 firstobs=2 ;
+informat ASX best32. ;
+informat CHIXAU best32. ;
+format ASX best12. ;
+format CHIXAU best12. ;
+input ASX CHIXAU
+  ;
+         
+PROC means data=work.BoxData_out;
+run;
+
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.BOXDATA_OUT;
+	vbox CHIXAU /;
+	yaxis grid;
+run;
+
+ods graphics / reset;
+
+proc means data=work.BoxData_out;
+var ASX;
+output out =summary n=n min=min max=max mean=mean p1=p1 p25=p25 p75=p75 p99=p99 median=median;
+run;
+
+           
+proc means data=work.BoxData_out;
+var CHIXAU;
+output out =summary1 n=n min=min max=max mean=mean p1=p1 p25=p25 p75=p75 p99=p99 median=median;
+run;       
+
+
+proc means data=WORK.BOXDATA_OUT chartype mean median p25 p75 p50 std min max n vardef=df;
+	var ASX CHIXAU;
+output out =summary3 mean=mean median=median p25=p25 p75=p75 p50=p50 std=std min=min max=max n=n;
+run;
+
+data new_dst_summary;
+set work.summary3;
+LOWER_LIMIT =max(0,p25-1.5*(p75-p25));
+UPPER_LIMIT=  p75 + 1.5*(p75-p25);
+plot_cal1=p25-LOWER_LIMIT;
+plot_cal2=median-p25;
+plot_cal3=p75-median;
+plot_cal4=UPPER_LIMIT-p75;
+run;
+
